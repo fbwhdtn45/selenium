@@ -1,0 +1,75 @@
+from selenium import webdriver
+import time
+
+# 크롬 드라이버 설정
+driver = webdriver.Chrome('./chromedriver.exe')
+
+# url 가져오지
+def initialize() :
+    url = "http://www.tanksw.com/flappy-circle/"
+    driver.get(url)
+
+# 첫 시작
+def start() :
+    play_btn = driver.find_element_by_id('menu')
+    play_btn.click()
+
+# replay 버튼 클릭
+def replay() :
+    replay_btn = driver.find_element_by_id('replay')
+    replay_btn.click()
+
+# isPlaying 변수 가져오기
+def is_playing() :
+    return driver.execute_script('return window.isPlaying')
+
+# 마우스 클릭 함수
+def click() :
+    mouse = driver.find_element_by_id('gameMouse')
+    mouse.click()
+
+def gap() :
+    # js 안의 각 변수들 가져오기
+    PosNow = driver.execute_script('return window.PosNow') # 현재 위치
+    line = driver.execute_script('return window.line') # 라인 위치 배열
+    CP = int(driver.execute_script('return window.CP')) # 현재 위치
+
+    # js 식 그대로 복사
+    nowLineHeight = -(line[CP + 1][0] - PosNow[0]) * ((line[CP + 1][1] - line[CP][1]) / (line[CP + 1][0] - line[CP][0])) + line[CP + 1][1]
+
+    # js 분석하여 원과 라인 사이의 gap 계산하여 return
+    return (nowLineHeight - 8) - (PosNow[1] - 65)
+
+# js 변수 값 변경
+def modify_variable_settings() :
+    # 원 점프 높이 
+    driver.execute_script('window.VyN = -2')
+
+    # 시작 라인을 전부 y 위치 300으로 고정
+    driver.execute_script('window.line = [[0,300],[100,300],[200,300]]')
+
+    # 라인 추가는 무조건 y 위치 300으로 고정
+    driver.execute_script('window.pushPoint = function (startX) {line.push([startX + 100, 300])};')
+
+
+if __name__ == "__main__" :
+    initialize()
+
+    start()
+
+    modify_variable_settings()
+
+    while True :
+        if not is_playing() :
+            time.sleep(2)
+
+            replay()
+
+            time.sleep(2)
+
+            start()
+        
+        if gap() < 25 :
+            click()
+
+    driver.close()
